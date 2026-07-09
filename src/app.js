@@ -31,7 +31,9 @@ app.innerHTML = `
       <div>
         <p>Light Status</p>
         <h2 id="lightStatus">--</h2>
-        <span id="nextAction">Firebase Ready</span>
+        <span id="liveClock">--:--</span>
+        <span id="nextAction">Next action calculating...</span>
+        <span id="remainingDays">Remaining days: --</span>
       </div>
       <button id="powerBtn" class="power-btn">⏻</button>
     </section>
@@ -91,6 +93,7 @@ const dashboard = document.querySelector("#dashboard");
 
 document.querySelector("#startBtn").addEventListener("click", () => {
   landing.classList.add("hide-landing");
+
   setTimeout(() => {
     landing.classList.add("hidden");
     dashboard.classList.remove("hidden");
@@ -98,7 +101,11 @@ document.querySelector("#startBtn").addEventListener("click", () => {
 });
 
 function addLog(message) {
-  const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const time = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
   const logList = document.querySelector("#logList");
   logList.innerHTML = `<li>${time} • ${message}</li>` + logList.innerHTML;
 }
@@ -108,8 +115,14 @@ async function turnLight(status) {
   addLog(`Light turned ${status}`);
 }
 
-document.querySelector("#onBtn").addEventListener("click", () => turnLight("ON"));
-document.querySelector("#offBtn").addEventListener("click", () => turnLight("OFF"));
+document.querySelector("#onBtn").addEventListener("click", () => {
+  turnLight("ON");
+});
+
+document.querySelector("#offBtn").addEventListener("click", () => {
+  turnLight("OFF");
+});
+
 document.querySelector("#powerBtn").addEventListener("click", () => {
   const current = document.querySelector("#lightStatus").textContent;
   turnLight(current === "ON" ? "OFF" : "ON");
@@ -158,4 +171,49 @@ listenDevice((data) => {
 
   document.querySelector("#wifiDisplay").textContent = data.device?.wifi || "Offline";
   document.querySelector("#rtcDisplay").textContent = data.device?.rtc || "--";
+
+  updateLiveStatus();
 });
+
+function getMinutes(time) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function updateLiveStatus() {
+  const now = new Date();
+
+  document.querySelector("#liveClock").textContent = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const onTime = document.querySelector("#onTime").value;
+  const offTime = document.querySelector("#offTime").value;
+  const mode = document.querySelector("#mode").value;
+  const days = Number(document.querySelector("#days").value);
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const onMinutes = getMinutes(onTime);
+  const offMinutes = getMinutes(offTime);
+
+  const diffOn = (onMinutes - currentMinutes + 1440) % 1440;
+  const diffOff = (offMinutes - currentMinutes + 1440) % 1440;
+
+  if (diffOn < diffOff) {
+    document.querySelector("#nextAction").textContent =
+      `Next ON in ${Math.floor(diffOn / 60)}h ${diffOn % 60}m`;
+  } else {
+    document.querySelector("#nextAction").textContent =
+      `Next OFF in ${Math.floor(diffOff / 60)}h ${diffOff % 60}m`;
+  }
+
+  if (mode === "continuous") {
+    document.querySelector("#remainingDays").textContent = "Continuous mode";
+  } else {
+    document.querySelector("#remainingDays").textContent = `Remaining days: ${days}`;
+  }
+}
+
+setInterval(updateLiveStatus, 1000);
+updateLiveStatus();

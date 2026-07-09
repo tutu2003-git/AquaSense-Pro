@@ -343,3 +343,11 @@ select {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+#liveClock,
+#nextAction,
+#remainingDays {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
