@@ -1257,6 +1257,11 @@ input:focus, select:focus {
   .preset-group {
     padding-bottom: 2px;
   }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 /* Responsiveness Grid for Tablet / Small Desktop */
